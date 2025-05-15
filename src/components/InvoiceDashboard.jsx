@@ -105,7 +105,9 @@ const InvoiceDashboard = (props) => {
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
       };
 
-      await html2pdf().from(element).set(opt).save();
+      // Fix: Properly initialize html2pdf
+      const worker = html2pdf();
+      await worker.from(element).set(opt).save();
       
     } catch (error) {
       console.error('Error generating PDF:', error);
