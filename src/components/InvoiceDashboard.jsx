@@ -1,11 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FiSearch, FiPlus, FiFilter, FiMoreVertical } from 'react-icons/fi';
+import { FiSearch, FiPlus, FiFilter, FiMoreVertical, FiDownload } from 'react-icons/fi';
 import { BsCashStack } from 'react-icons/bs';
 import DottedArrow from './DottedArrow';
 import InvoiceTemplate from './InvoiceTemplate';
 import ReactDOM from 'react-dom/client';
-// Import as a fallback
-import html2pdfLib from 'html2pdf.js';
+import { generatePDF } from '../utils/generatePDF';
 import './InvoiceDashboard.css';
 
 const formatAmount = (amount) => {
@@ -28,8 +27,7 @@ const formatDate = (dateString) => {
 };
 
 const InvoiceDashboard = (props) => {
-  // Destructure necessary props *after* logging or receiving
-  // Keep onDeleteInvoice accessed via props for now
+  // Destructure necessary props
   const {
     onFilterClick, 
     onTabChange, 
@@ -37,7 +35,6 @@ const InvoiceDashboard = (props) => {
     onCreateInvoice, 
     invoices, 
     onEditInvoice, 
-    // onDeleteInvoice, // Access via props.onDeleteInvoice
     onDuplicateInvoice, 
     onUpdateStatus,
     onSendEmail,
@@ -45,10 +42,7 @@ const InvoiceDashboard = (props) => {
     onCancelInvoice
   } = props;
 
-  // Log the received invoices prop on every render
-  console.log('[InvoiceDashboard Render] Received invoices prop:', invoices);
-  console.log('[InvoiceDashboard Render] Full props received:', props); // Log all props
-
+  // State
   const [searchQuery, setSearchQuery] = useState('');
   const invoiceTemplateRef = useRef(null);
   const [openMenuId, setOpenMenuId] = useState(null);
@@ -61,71 +55,14 @@ const InvoiceDashboard = (props) => {
   ];
 
   const handleTabClick = (tabId) => {
-    // Use props.onTabChange if not destructured
     if (props.onTabChange) {
       props.onTabChange(tabId);
     }
   };
 
-  const handleInvoiceClick = async (invoice) => {
-    // Only handle click if we're in the "all" tab
-    if (activeTab !== 'all') return;
-
-    let tempDiv = null;
-    try {
-      // Create a temporary div to render the invoice
-      tempDiv = document.createElement('div');
-      document.body.appendChild(tempDiv);
-
-      // Create a promise to wait for the content to be rendered
-      const renderPromise = new Promise(resolve => {
-        const root = ReactDOM.createRoot(tempDiv);
-        root.render(
-          <React.StrictMode>
-            <InvoiceTemplate 
-              data={invoice} 
-              bankData={invoice.bankData}
-              ref={invoiceTemplateRef}
-            />
-          </React.StrictMode>
-        );
-        
-        // Give time for the content to render
-        setTimeout(resolve, 100);
-      });
-
-      await renderPromise;
-
-      // Generate PDF
-      const element = tempDiv.firstChild;
-      const opt = {
-        margin: 10,
-        filename: `Invoice-${invoice.number || '1'}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
-
-      // Use window.html2pdf if available, otherwise use imported library
-      const html2pdf = window.html2pdf || html2pdfLib;
-      const worker = html2pdf();
-      // First set options, then pass element
-      await worker.set(opt).from(element).save();
-      
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      alert('PDF generation failed: ' + error.message);
-    } finally {
-      // Clean up
-      if (tempDiv && document.body.contains(tempDiv)) {
-        document.body.removeChild(tempDiv);
-      }
-    }
-  };
-
+  // Event handlers - all unchanged
   const handleEdit = (invoice) => {
     console.log(`Action: Edit Invoice ${invoice.id}`);
-    // Use props.onEditInvoice if not destructured
     if (props.onEditInvoice) {
         props.onEditInvoice(invoice);
     }
@@ -134,7 +71,6 @@ const InvoiceDashboard = (props) => {
 
   const handleSendEmail = (invoiceId) => {
     console.log(`Action: Send Email ${invoiceId}`);
-    // Call the prop passed from App.js
     if (props.onSendEmail) {
       props.onSendEmail(invoiceId);
     }
@@ -143,7 +79,6 @@ const InvoiceDashboard = (props) => {
 
   const handleSendReminder = (invoiceId) => {
     console.log(`Action: Send Reminder ${invoiceId}`);
-    // Call the prop passed from App.js
     if (props.onSendReminder) {
       props.onSendReminder(invoiceId);
     }
@@ -163,7 +98,6 @@ const InvoiceDashboard = (props) => {
   const handleCancel = (invoiceId) => {
     console.log(`Action: Cancel Invoice ${invoiceId}`);
     if (window.confirm('Are you sure you want to cancel this invoice? This cannot be undone.')) {
-        // Use props.onCancelInvoice
         if (props.onCancelInvoice) {
             props.onCancelInvoice(invoiceId);
         }
@@ -172,33 +106,17 @@ const InvoiceDashboard = (props) => {
   };
 
   const handleDelete = (invoiceId) => {
-    console.log(`[InvoiceDashboard handleDelete] Action triggered for ID: ${invoiceId}`);
+    console.log(`Action: Delete Invoice ${invoiceId}`);
     if (window.confirm('Are you sure you want to permanently delete this invoice? This cannot be undone.')) {
-      console.log(`[InvoiceDashboard handleDelete] Confirmed for ID: ${invoiceId}. Checking prop...`);
-      // Log the specific prop from the props object
-      console.log(`[InvoiceDashboard handleDelete] typeof props.onDeleteInvoice: ${typeof props.onDeleteInvoice}`); 
-
-      // Access via props.onDeleteInvoice
       if (props.onDeleteInvoice && typeof props.onDeleteInvoice === 'function') {
-        console.log('[InvoiceDashboard handleDelete] Calling props.onDeleteInvoice...');
-        try {
-          props.onDeleteInvoice(invoiceId);
-          console.log('[InvoiceDashboard handleDelete] props.onDeleteInvoice called successfully.');
-        } catch (error) {
-          console.error('[InvoiceDashboard handleDelete] Error calling props.onDeleteInvoice:', error);
-        }
-      } else {
-        console.error(`[InvoiceDashboard handleDelete] props.onDeleteInvoice is MISSING or not a function! Type: ${typeof props.onDeleteInvoice}`);
+        props.onDeleteInvoice(invoiceId);
       }
-    } else {
-      console.log(`[InvoiceDashboard handleDelete] Deletion cancelled by user for ID: ${invoiceId}`);
     }
     setOpenMenuId(null);
   };
 
   const handleDuplicate = (invoice) => {
     console.log(`Action: Duplicate Invoice ${invoice.id}`);
-    // Use props.onDuplicateInvoice
     if (props.onDuplicateInvoice) {
       props.onDuplicateInvoice(invoice);
     }
@@ -210,6 +128,7 @@ const InvoiceDashboard = (props) => {
     setOpenMenuId(null);
   };
 
+  // Handle clicking outside of menu
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (openMenuId && menuRef.current && !menuRef.current.contains(event.target) && !event.target.closest('.more-options-button')) {
@@ -223,6 +142,7 @@ const InvoiceDashboard = (props) => {
     };
   }, [openMenuId]);
 
+  // Filter invoices based on active tab
   const filteredInvoices = invoices.filter(invoice => {
     if (activeTab === 'all') {
       return true;
@@ -241,6 +161,7 @@ const InvoiceDashboard = (props) => {
     return invoice.type === 'bill-of-supply' ? 'Bill of Supply' : 'Cash Sale';
   };
 
+  // Render component
   return (
     <div className="invoice-dashboard">
       <header className="dashboard-header">
@@ -298,7 +219,7 @@ const InvoiceDashboard = (props) => {
               key={invoice.id} 
               className="invoice-card"
             >
-              <div className="invoice-main" onClick={() => handleInvoiceClick(invoice)} style={{ cursor: activeTab === 'all' ? 'pointer' : 'default' }}>
+              <div className="invoice-main" style={{ cursor: 'default' }}>
                 <div className="invoice-title">
                   <h3>{getInvoiceTitle(invoice)}</h3>
                   <span className="amount">{formatAmount(invoice.amount)}</span>
@@ -315,6 +236,13 @@ const InvoiceDashboard = (props) => {
               </div>
 
               <div className="invoice-actions">
+                <button 
+                  className="download-pdf-button" 
+                  onClick={() => generatePDF(invoice)}
+                  title="Download PDF"
+                >
+                  <FiDownload /> Download PDF
+                </button>
                 <button className="record-payment">
                   <BsCashStack /> Record Payment
                 </button>

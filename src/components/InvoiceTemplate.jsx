@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useEffect } from 'react';
 import './InvoiceTemplate.css';
 import { numberToWords } from '../utils/numberToWords';
 import { FiUser } from 'react-icons/fi';
@@ -12,8 +12,30 @@ const formatDate = (dateString) => {
   }).split('/').join('-');
 };
 
-const InvoiceTemplate = forwardRef(({ data = {}, bankData = null }, ref) => {
-  console.log('InvoiceTemplate received data:', data); // Debug log
+const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false }, ref) => {
+  // Debug logs
+  console.log('InvoiceTemplate rendered with data:', data);
+  console.log('InvoiceTemplate bank data:', bankData);
+  
+  // Add effect to log when component is fully mounted
+  useEffect(() => {
+    console.log('InvoiceTemplate mounted and ready');
+    console.log('Products in template:', data?.products?.length || 0);
+    console.log('Supplier data:', data?.supplierData);
+    console.log('Buyer data:', data?.buyerData);
+    
+    // Validate that crucial data exists
+    if (!data?.products || data.products.length === 0) {
+      console.warn('WARNING: No products in invoice data');
+    }
+    if (!data?.supplierData?.companyName) {
+      console.warn('WARNING: No supplier company name');
+    }
+    if (!data?.buyerData?.companyName) {
+      console.warn('WARNING: No buyer company name');
+    }
+  }, [data, bankData]);
+
   const {
     invoiceNumber = '',
     number = '',
@@ -41,17 +63,43 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null }, ref) => {
   }, 0);
   const grandTotal = subTotal + totalGST;
 
+  // Additional styles for PDF rendering
+  const pdfStyles = forPDF ? {
+    wrapper: {
+      width: '180mm',
+      padding: '5mm',
+      backgroundColor: 'white',
+      color: 'black',
+      fontFamily: 'Arial, sans-serif',
+      fontSize: '9pt'
+    },
+    table: {
+      width: '100%',
+      tableLayout: 'fixed',
+      fontSize: '7pt'
+    },
+    tableCell: {
+      padding: '2px',
+      whiteSpace: 'normal',
+      wordWrap: 'break-word',
+      overflow: 'visible'
+    },
+    pageBreakAvoid: {
+      pageBreakInside: 'avoid'
+    }
+  } : {};
+
   return (
-    <div className="invoice-template" ref={ref}>
+    <div className="invoice-template" ref={ref} style={pdfStyles.wrapper}>
       {/* Company Header */}
       <div className="company-header">
         <div className="company-logo">
           {supplierData?.logo && <img src={supplierData.logo} alt="Company Logo" />}
         </div>
         <div className="company-info">
-          <h1>{supplierData?.companyName}</h1>
+          <h1>{supplierData?.name}</h1>
           <p>{supplierData?.address}</p>
-          <p>{supplierData?.city}, {supplierData?.state}, {supplierData?.pincode}</p>
+          {/* <p>{supplierData?.city}, {supplierData?.state}, {supplierData?.pincode}</p> */}
           <p>{supplierData?.phone}</p>
           <p>{supplierData?.email}</p>
           <p>GSTIN: {supplierData?.gstin}</p>
@@ -179,33 +227,33 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null }, ref) => {
       </div>
 
       {/* Product Table */}
-      <table className="product-table">
+      <table className="product-table" style={pdfStyles.pageBreakAvoid}>
         <thead>
           <tr className="header-row">
-            <th>Sr. No.</th>
-            <th>Name of Product</th>
-            <th>HSN/SAC</th>
-            <th>QTY</th>
-            <th>Unit</th>
-            <th>Rate</th>
-            <th>Taxable Value</th>
-            <th colSpan="2">CGST</th>
-            <th colSpan="2">SGST</th>
-            <th>Total</th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}>Sr. No.</th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}>Name of Product</th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}>HSN/SAC</th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}>QTY</th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}>Unit</th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}>Rate</th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}>Taxable Value</th>
+            <th style={forPDF ? pdfStyles.tableCell : {}} colSpan="2">CGST</th>
+            <th style={forPDF ? pdfStyles.tableCell : {}} colSpan="2">SGST</th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}>Total</th>
           </tr>
           <tr className="sub-header-row">
-            <th></th>
-            <th></th>
-            <th></th>
-            <th></th>
-            <th></th>
-            <th></th>
-            <th></th>
-            <th>Rate</th>
-            <th>Amount</th>
-            <th>Rate</th>
-            <th>Amount</th>
-            <th></th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}></th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}></th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}></th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}></th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}></th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}></th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}></th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}>Rate</th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}>Amount</th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}>Rate</th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}>Amount</th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}></th>
           </tr>
         </thead>
         <tbody>
@@ -220,31 +268,31 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null }, ref) => {
             
             return (
               <tr key={index} className={index % 2 === 0 ? 'even-row' : ''}>
-                <td>{index + 1}</td>
-                <td>{product?.name}</td>
-                <td>{product?.hsn}</td>
-                <td>{quantity}</td>
-                <td>{product?.unit}</td>
-                <td>{rate.toFixed(2)}</td>
-                <td>{amount.toFixed(2)}</td>
-                <td>{(gstRate / 2).toFixed(1)}%</td>
-                <td>{cgstAmount.toFixed(2)}</td>
-                <td>{(gstRate / 2).toFixed(1)}%</td>
-                <td>{sgstAmount.toFixed(2)}</td>
-                <td>{(amount + gstAmount).toFixed(2)}</td>
+                <td style={forPDF ? pdfStyles.tableCell : {}}>{index + 1}</td>
+                <td style={forPDF ? pdfStyles.tableCell : {}}>{product?.name}</td>
+                <td style={forPDF ? pdfStyles.tableCell : {}}>{product?.hsn}</td>
+                <td style={forPDF ? pdfStyles.tableCell : {}}>{quantity}</td>
+                <td style={forPDF ? pdfStyles.tableCell : {}}>{product?.unit}</td>
+                <td style={forPDF ? pdfStyles.tableCell : {}}>{rate.toFixed(2)}</td>
+                <td style={forPDF ? pdfStyles.tableCell : {}}>{amount.toFixed(2)}</td>
+                <td style={forPDF ? pdfStyles.tableCell : {}}>{(gstRate / 2).toFixed(1)}%</td>
+                <td style={forPDF ? pdfStyles.tableCell : {}}>{cgstAmount.toFixed(2)}</td>
+                <td style={forPDF ? pdfStyles.tableCell : {}}>{(gstRate / 2).toFixed(1)}%</td>
+                <td style={forPDF ? pdfStyles.tableCell : {}}>{sgstAmount.toFixed(2)}</td>
+                <td style={forPDF ? pdfStyles.tableCell : {}}>{(amount + gstAmount).toFixed(2)}</td>
               </tr>
             );
           })}
           <tr className="total-row">
-            <td colSpan="3">Total Quantity</td>
-            <td>{totalQuantity}</td>
-            <td colSpan="8"></td>
+            <td style={forPDF ? pdfStyles.tableCell : {}} colSpan="3">Total Quantity</td>
+            <td style={forPDF ? pdfStyles.tableCell : {}}>{totalQuantity}</td>
+            <td style={forPDF ? pdfStyles.tableCell : {}} colSpan="8"></td>
           </tr>
         </tbody>
       </table>
 
       {/* Amount Section */}
-      <div className="amount-section">
+      <div className="amount-section" style={pdfStyles.pageBreakAvoid}>
         <div className="amount-in-words">
           <p>Total Invoice Amount in Words:</p>
           <p>{numberToWords(grandTotal)}</p>
@@ -274,7 +322,7 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null }, ref) => {
       </div>
 
       {/* Terms and Signature */}
-      <div className="footer-section">
+      <div className="footer-section" style={pdfStyles.pageBreakAvoid}>
         <div className="terms">
           <h4>Terms and Conditions</h4>
           <ol>
