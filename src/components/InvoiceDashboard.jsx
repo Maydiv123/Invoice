@@ -4,7 +4,8 @@ import { BsCashStack } from 'react-icons/bs';
 import DottedArrow from './DottedArrow';
 import InvoiceTemplate from './InvoiceTemplate';
 import ReactDOM from 'react-dom/client';
-import html2pdf from 'html2pdf.js';
+// Import as a fallback
+import html2pdfLib from 'html2pdf.js';
 import './InvoiceDashboard.css';
 
 const formatAmount = (amount) => {
@@ -105,12 +106,15 @@ const InvoiceDashboard = (props) => {
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
       };
 
-      // Fix: Properly initialize html2pdf
+      // Use window.html2pdf if available, otherwise use imported library
+      const html2pdf = window.html2pdf || html2pdfLib;
       const worker = html2pdf();
-      await worker.from(element).set(opt).save();
+      // First set options, then pass element
+      await worker.set(opt).from(element).save();
       
     } catch (error) {
       console.error('Error generating PDF:', error);
+      alert('PDF generation failed: ' + error.message);
     } finally {
       // Clean up
       if (tempDiv && document.body.contains(tempDiv)) {
