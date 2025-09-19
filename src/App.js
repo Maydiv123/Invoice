@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import InvoiceDashboard from './components/InvoiceDashboard';
 import InvoiceFilter from './components/InvoiceFilter';
 import CreateInvoice from './components/CreateInvoice';
+import { addInvoice, updateInvoice, deleteInvoice, subscribeToInvoices } from './firebase/invoiceService';
 import './App.css';
 
 function App() {
@@ -11,17 +12,20 @@ function App() {
   const [invoices, setInvoices] = useState([]);
   const [editingInvoice, setEditingInvoice] = useState(null);
 
-  // Load invoices from localStorage when app starts
+  // Load invoices from Firebase when app starts
   useEffect(() => {
-    const savedInvoices = localStorage.getItem('invoices');
-    if (savedInvoices) {
-      try {
-        const parsed = JSON.parse(savedInvoices);
-        setInvoices(parsed);
-      } catch (error) {
-        console.error('Error loading saved invoices:', error);
-      }
-    }
+    console.log('🔥 Setting up Firebase real-time listener for invoices...');
+    
+    const unsubscribe = subscribeToInvoices((firebaseInvoices) => {
+      console.log('🔥 Firebase: Received invoices from Firestore:', firebaseInvoices);
+      setInvoices(firebaseInvoices);
+    });
+
+    // Cleanup subscription on unmount
+    return () => {
+      console.log('🔥 Cleaning up Firebase subscription...');
+      unsubscribe();
+    };
   }, []);
 
   const handleFilterApply = (filters) => {
@@ -38,59 +42,53 @@ function App() {
   };
 
   // Add delete invoice handler
-  const handleDeleteInvoice = (invoiceId) => {
-    console.log(`[App handleDeleteInvoice] Deleting invoice with ID: ${invoiceId}`);
-    const updatedInvoices = invoices.filter(invoice => invoice.id !== invoiceId);
-    setInvoices(updatedInvoices);
-    
-    // Update localStorage
+  const handleDeleteInvoice = async (invoiceId) => {
     try {
-      localStorage.setItem('invoices', JSON.stringify(updatedInvoices));
-      console.log('[App handleDeleteInvoice] LocalStorage updated successfully');
+      console.log(`🔥 [App] Deleting invoice with ID: ${invoiceId} from Firebase...`);
+      await deleteInvoice(invoiceId);
+      console.log('✅ [App] Invoice deleted successfully from Firebase');
     } catch (error) {
-      console.error('[App handleDeleteInvoice] Error updating localStorage:', error);
+      console.error('❌ [App] Error deleting invoice from Firebase:', error);
+      alert('Error deleting invoice. Please try again.');
     }
   };
 
   // Add cancel invoice handler
-  const handleCancelInvoice = (invoiceId) => {
-    console.log(`[App handleCancelInvoice] Cancelling invoice with ID: ${invoiceId}`);
-    const updatedInvoices = invoices.map(invoice => 
-      invoice.id === invoiceId ? {...invoice, status: 'cancelled'} : invoice
-    );
-    setInvoices(updatedInvoices);
-    
-    // Update localStorage
+  const handleCancelInvoice = async (invoiceId) => {
     try {
-      localStorage.setItem('invoices', JSON.stringify(updatedInvoices));
-      console.log('[App handleCancelInvoice] LocalStorage updated successfully');
+      console.log(`🔥 [App] Cancelling invoice with ID: ${invoiceId} in Firebase...`);
+      const invoiceToUpdate = invoices.find(invoice => invoice.id === invoiceId);
+      if (invoiceToUpdate) {
+        await updateInvoice(invoiceId, { ...invoiceToUpdate, status: 'cancelled' });
+        console.log('✅ [App] Invoice cancelled successfully in Firebase');
+      }
     } catch (error) {
-      console.error('[App handleCancelInvoice] Error updating localStorage:', error);
+      console.error('❌ [App] Error cancelling invoice in Firebase:', error);
+      alert('Error cancelling invoice. Please try again.');
     }
   };
 
   // Add duplicate invoice handler
-  const handleDuplicateInvoice = (invoice) => {
-    console.log(`[App handleDuplicateInvoice] Duplicating invoice with ID: ${invoice.id}`);
-    
-    // Create a new invoice based on the existing one, with a new ID
-    const newInvoice = {
-      ...invoice,
-      id: Date.now(),
-      number: `${invoice.number}-copy`,
-      date: new Date().toLocaleDateString('en-IN'),
-      status: 'unpaid'
-    };
-    
-    const updatedInvoices = [...invoices, newInvoice];
-    setInvoices(updatedInvoices);
-    
-    // Update localStorage
+  const handleDuplicateInvoice = async (invoice) => {
     try {
-      localStorage.setItem('invoices', JSON.stringify(updatedInvoices));
-      console.log('[App handleDuplicateInvoice] LocalStorage updated successfully');
+      console.log(`🔥 [App] Duplicating invoice with ID: ${invoice.id} in Firebase...`);
+      
+      // Create a new invoice based on the existing one
+      const newInvoiceData = {
+        ...invoice,
+        number: `${invoice.number || invoice.id}-copy`,
+        date: new Date().toLocaleDateString('en-IN'),
+        status: 'unpaid'
+      };
+      
+      // Remove the id so Firebase can generate a new one
+      delete newInvoiceData.id;
+      
+      await addInvoice(newInvoiceData);
+      console.log('✅ [App] Invoice duplicated successfully in Firebase');
     } catch (error) {
-      console.error('[App handleDuplicateInvoice] Error updating localStorage:', error);
+      console.error('❌ [App] Error duplicating invoice in Firebase:', error);
+      alert('Error duplicating invoice. Please try again.');
     }
   };
   
@@ -102,19 +100,17 @@ function App() {
   };
 
   // Add status update handler
-  const handleUpdateStatus = (invoiceId, status) => {
-    console.log(`[App handleUpdateStatus] Updating status for invoice ID: ${invoiceId} to ${status}`);
-    const updatedInvoices = invoices.map(invoice => 
-      invoice.id === invoiceId ? {...invoice, status} : invoice
-    );
-    setInvoices(updatedInvoices);
-    
-    // Update localStorage
+  const handleUpdateStatus = async (invoiceId, status) => {
     try {
-      localStorage.setItem('invoices', JSON.stringify(updatedInvoices));
-      console.log('[App handleUpdateStatus] LocalStorage updated successfully');
+      console.log(`🔥 [App] Updating status for invoice ID: ${invoiceId} to ${status} in Firebase...`);
+      const invoiceToUpdate = invoices.find(invoice => invoice.id === invoiceId);
+      if (invoiceToUpdate) {
+        await updateInvoice(invoiceId, { ...invoiceToUpdate, status });
+        console.log('✅ [App] Invoice status updated successfully in Firebase');
+      }
     } catch (error) {
-      console.error('[App handleUpdateStatus] Error updating localStorage:', error);
+      console.error('❌ [App] Error updating invoice status in Firebase:', error);
+      alert('Error updating invoice status. Please try again.');
     }
   };
 
@@ -129,52 +125,65 @@ function App() {
     alert(`Payment reminder would be sent for invoice ${invoiceId} in a real application`);
   };
 
-  const handleSaveInvoice = (invoiceData) => {
-    if (editingInvoice) {
-      // Update existing invoice
-      const updatedInvoices = invoices.map(invoice => 
-        invoice.id === editingInvoice.id ? 
-          {...invoice, ...invoiceData, id: editingInvoice.id} : 
-          invoice
-      );
-      setInvoices(updatedInvoices);
+  const handleSaveInvoice = async (invoiceData) => {
+    try {
+      console.log('🔥 [App] Starting to save invoice to Firebase...');
+      console.log('🔥 [App] Invoice data:', invoiceData);
+      console.log('🔥 [App] Editing invoice:', editingInvoice);
       
-      // Update localStorage
-      try {
-        localStorage.setItem('invoices', JSON.stringify(updatedInvoices));
-      } catch (error) {
-        console.error('Error saving invoices:', error);
+      if (editingInvoice) {
+        // Update existing invoice in Firebase
+        console.log('🔥 [App] Updating existing invoice in Firebase...');
+        const updatedInvoiceData = {
+          ...invoiceData,
+          type: invoiceData.invoiceType || 'tax-invoice',
+          amount: invoiceData.amount || 0,
+          number: invoiceData.invoiceNo || String(invoices.length + 1),
+          date: invoiceData.date || new Date().toLocaleDateString('en-IN'),
+          status: editingInvoice.status || 'unpaid',
+          selectedBuyer: invoiceData.selectedBuyer || {},
+          supplierData: invoiceData.supplierData || {},
+          products: invoiceData.products || [],
+          transportData: invoiceData.transportData || {},
+          otherData: invoiceData.otherData || {},
+          bankData: invoiceData.bankData || {},
+          includeSignature: invoiceData.includeSignature || false,
+          signatureImage: invoiceData.signatureImage || null
+        };
+        
+        await updateInvoice(editingInvoice.id, updatedInvoiceData);
+        console.log('✅ [App] Invoice updated successfully in Firebase');
+      } else {
+        // Create new invoice in Firebase
+        console.log('🔥 [App] Creating new invoice in Firebase...');
+        const newInvoiceData = {
+          type: invoiceData.invoiceType || 'tax-invoice',
+          amount: invoiceData.amount || 0,
+          number: invoiceData.invoiceNo || String(invoices.length + 1),
+          date: invoiceData.date || new Date().toLocaleDateString('en-IN'),
+          status: 'unpaid',
+          selectedBuyer: invoiceData.selectedBuyer || {},
+          supplierData: invoiceData.supplierData || {},
+          products: invoiceData.products || [],
+          transportData: invoiceData.transportData || {},
+          otherData: invoiceData.otherData || {},
+          bankData: invoiceData.bankData || {},
+          includeSignature: invoiceData.includeSignature || false,
+          signatureImage: invoiceData.signatureImage || null
+        };
+        
+        await addInvoice(newInvoiceData);
+        console.log('✅ [App] Invoice created successfully in Firebase');
       }
-    } else {
-      // Create new invoice
-      const newInvoice = {
-        id: Date.now(),
-        type: invoiceData.invoiceType || 'tax-invoice',
-        amount: invoiceData.amount || 0,
-        number: invoiceData.invoiceNo || String(invoices.length + 1),
-        date: invoiceData.date || new Date().toLocaleDateString('en-IN'),
-        status: 'unpaid',
-        buyerData: invoiceData.selectedBuyer || {},
-        supplierData: invoiceData.supplierData || {},
-        products: invoiceData.products || [],
-        transportData: invoiceData.transportData || {},
-        otherData: invoiceData.otherData || {},
-        bankData: invoiceData.bankData || {}
-      };
-
-      const updatedInvoices = [...invoices, newInvoice];
-      setInvoices(updatedInvoices);
       
-      // Save to localStorage
-      try {
-        localStorage.setItem('invoices', JSON.stringify(updatedInvoices));
-      } catch (error) {
-        console.error('Error saving invoices:', error);
-      }
+      // Close the create invoice modal
+      setShowCreateInvoice(false);
+      setEditingInvoice(null);
+      
+    } catch (error) {
+      console.error('❌ [App] Error saving invoice to Firebase:', error);
+      alert('Error saving invoice. Please try again.');
     }
-    
-    setShowCreateInvoice(false);
-    setEditingInvoice(null);
   };
 
   return (

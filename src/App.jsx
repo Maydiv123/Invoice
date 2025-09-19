@@ -3,53 +3,136 @@ import InvoiceDashboard from './components/InvoiceDashboard';
 import CreateInvoice from './components/CreateInvoice';
 import './App.css'; // Optional: Add global styles if needed
 
-const INVOICES_STORAGE_KEY = 'invoiceApp_allInvoices'; // Use a consistent key
+// Import Firebase functions
+import { collection, addDoc, updateDoc, deleteDoc, doc, query, orderBy, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+// Wait for Firebase to be available from index.html
+let app, db;
+
+// Function to initialize Firebase when available
+const initFirebase = () => {
+  if (window.firebaseApp && window.firebaseDb) {
+    app = window.firebaseApp;
+    db = window.firebaseDb;
+    console.log('🔥 Firebase initialized from global window:', app);
+    console.log('🔥 Firestore database object:', db);
+    return true;
+  }
+  return false;
+};
+
+// Check if Firebase is already available
+if (!initFirebase()) {
+  // If not available, wait for it
+  const checkFirebase = setInterval(() => {
+    if (initFirebase()) {
+      clearInterval(checkFirebase);
+    }
+  }, 100);
+}
+
+// Firebase service functions
+const INVOICES_COLLECTION = 'invoices';
+
+const addInvoice = async (invoiceData) => {
+  try {
+    console.log('🔥 Firebase: Attempting to add invoice to Firestore...');
+    console.log('🔥 Firebase: Database object:', db);
+    console.log('🔥 Firebase: Invoice data:', invoiceData);
+    
+    const docRef = await addDoc(collection(db, INVOICES_COLLECTION), {
+      ...invoiceData,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+    console.log('✅ Firebase: Invoice added successfully with ID: ', docRef.id);
+    return { id: docRef.id, ...invoiceData };
+  } catch (error) {
+    console.error('❌ Firebase: Error adding invoice: ', error);
+    console.error('❌ Firebase: Error details:', error.message);
+    throw error;
+  }
+};
+
+const updateInvoice = async (invoiceId, invoiceData) => {
+  try {
+    const invoiceRef = doc(db, INVOICES_COLLECTION, invoiceId);
+    await updateDoc(invoiceRef, {
+      ...invoiceData,
+      updatedAt: new Date()
+    });
+    console.log('Invoice updated successfully');
+    return { id: invoiceId, ...invoiceData };
+  } catch (error) {
+    console.error('Error updating invoice: ', error);
+    throw error;
+  }
+};
+
+const deleteInvoice = async (invoiceId) => {
+  try {
+    await deleteDoc(doc(db, INVOICES_COLLECTION, invoiceId));
+    console.log('Invoice deleted successfully');
+    return true;
+  } catch (error) {
+    console.error('Error deleting invoice: ', error);
+    throw error;
+  }
+};
+
+const subscribeToInvoices = (callback) => {
+  const q = query(collection(db, INVOICES_COLLECTION), orderBy('createdAt', 'desc'));
+  
+  return onSnapshot(q, (querySnapshot) => {
+    const invoices = [];
+    querySnapshot.forEach((doc) => {
+      invoices.push({ id: doc.id, ...doc.data() });
+    });
+    callback(invoices);
+  }, (error) => {
+    console.error('Error listening to invoices: ', error);
+  });
+};
 
 function App() {
-  const [invoices, setInvoices] = useState(() => {
-    try {
-      const savedInvoices = localStorage.getItem(INVOICES_STORAGE_KEY);
-      return savedInvoices ? JSON.parse(savedInvoices) : [];
-    } catch (error) {
-      console.error("Error loading invoices from localStorage:", error);
-      return [];
-    }
-  });
-
+  const [invoices, setInvoices] = useState([]);
   const [activeView, setActiveView] = useState('dashboard'); // 'dashboard' or 'create'
   const [editingInvoice, setEditingInvoice] = useState(null); // Store invoice data for editing/duplicating
+  const [loading, setLoading] = useState(true);
 
-  // Save invoices to localStorage whenever they change
+  // Subscribe to real-time updates from Firebase
   useEffect(() => {
-    try {
-      localStorage.setItem(INVOICES_STORAGE_KEY, JSON.stringify(invoices));
-      console.log('[App Effect] Invoices saved to localStorage.');
-    } catch (error) {
-      console.error("Error saving invoices to localStorage:", error);
-    }
-  }, [invoices]);
+    const unsubscribe = subscribeToInvoices((invoicesData) => {
+      setInvoices(invoicesData);
+      setLoading(false);
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, []);
 
   // --- Handler Functions for InvoiceDashboard Actions ---
 
-  const handleDeleteInvoice = (invoiceIdToDelete) => {
+  const handleDeleteInvoice = async (invoiceIdToDelete) => {
     console.log(`[App handleDelete] Attempting to delete invoice ID: ${invoiceIdToDelete}`);
-    console.log('[App handleDelete] Invoices BEFORE delete:', invoices);
-    setInvoices(prevInvoices => {
-      const updatedInvoices = prevInvoices.filter(inv => inv.id !== invoiceIdToDelete);
-      console.log('[App handleDelete] Invoices AFTER filter (inside setter):', updatedInvoices);
-      return updatedInvoices;
-    });
-    // Note: Logging 'invoices' immediately after setInvoices might show the old state 
-    // due to asynchronous nature. The useEffect log is more reliable for final state.
+    try {
+      await deleteInvoice(invoiceIdToDelete);
+      console.log('Invoice deleted successfully');
+    } catch (error) {
+      console.error('Error deleting invoice:', error);
+      alert('Error deleting invoice. Please try again.');
+    }
   };
 
-  const handleUpdateInvoiceStatus = (invoiceId, newStatus) => {
+  const handleUpdateInvoiceStatus = async (invoiceId, newStatus) => {
     console.log('[App] Updating status for invoice:', invoiceId, 'to', newStatus);
-    setInvoices(prevInvoices =>
-      prevInvoices.map(inv =>
-        inv.id === invoiceId ? { ...inv, status: newStatus } : inv
-      )
-    );
+    try {
+      await updateInvoice(invoiceId, { status: newStatus });
+      console.log('Invoice status updated successfully');
+    } catch (error) {
+      console.error('Error updating invoice status:', error);
+      alert('Error updating invoice status. Please try again.');
+    }
   };
 
   const handleEditInvoice = (invoiceToEdit) => {
@@ -82,28 +165,34 @@ function App() {
     setActiveView('create');
   };
 
-  const handleSaveInvoice = (invoiceDataFromForm) => {
+  const handleSaveInvoice = async (invoiceDataFromForm) => {
+    console.log('[App] handleSaveInvoice called with:', invoiceDataFromForm);
+    console.log('[App] handleSaveInvoice function:', handleSaveInvoice);
     console.log('[App] Attempting to save invoice:', invoiceDataFromForm);
-    setInvoices(prevInvoices => {
+    console.log('[App] Firebase app available:', !!app);
+    console.log('[App] Firebase db available:', !!db);
+    console.log('[App] handleSaveInvoice function name:', handleSaveInvoice.name);
+    
+    try {
       if (invoiceDataFromForm.id) {
         // Editing existing invoice
         console.log('[App] Updating existing invoice:', invoiceDataFromForm.id);
-        return prevInvoices.map(inv =>
-          inv.id === invoiceDataFromForm.id ? { ...inv, ...invoiceDataFromForm } : inv // Merge updates
-        );
+        await updateInvoice(invoiceDataFromForm.id, invoiceDataFromForm);
       } else {
         // Adding new invoice
         const newInvoiceWithDefaults = {
           ...invoiceDataFromForm,
-          id: Date.now(), // Generate unique ID
           status: 'Unpaid' // Set default status
         };
         console.log('[App] Adding new invoice:', newInvoiceWithDefaults);
-        return [...prevInvoices, newInvoiceWithDefaults];
+        await addInvoice(newInvoiceWithDefaults);
       }
-    });
-    setActiveView('dashboard'); // Go back to dashboard
-    setEditingInvoice(null); // Clear editing state
+      setActiveView('dashboard'); // Go back to dashboard
+      setEditingInvoice(null); // Clear editing state
+    } catch (error) {
+      console.error('Error saving invoice:', error);
+      alert('Error saving invoice. Please try again.');
+    }
   };
 
   const handleCloseCreateInvoice = () => {
@@ -116,9 +205,13 @@ function App() {
 
   console.log(`[App Render] Active view: ${activeView}, Editing Invoice ID: ${editingInvoice?.id}`);
 
-  // Log the type of handleDeleteInvoice right before rendering the dashboard
-  if (activeView === 'dashboard') {
-    console.log('[App Render] About to render Dashboard. Type of handleDeleteInvoice:', typeof handleDeleteInvoice);
+  // Show loading state while Firebase is connecting
+  if (loading) {
+    return (
+      <div className="App" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <div>Loading invoices...</div>
+      </div>
+    );
   }
 
   return (

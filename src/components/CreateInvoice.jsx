@@ -76,6 +76,12 @@ const initialProducts = [
 
 // Accept initialInvoiceData prop
 const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
+  console.log('CreateInvoice component props:', { onClose, onSave, initialInvoiceData });
+  console.log('onSave prop type:', typeof onSave);
+  console.log('onSave prop value:', onSave);
+  
+  // Store the original onSave function
+  const originalOnSave = onSave;
   // --- State Initialization ---
   // Initialize state based on initialInvoiceData or defaults
   const [invoiceId, setInvoiceId] = useState(initialInvoiceData?.id || null);
@@ -270,11 +276,14 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
       // Include the id if we are editing
       id: invoiceId, 
       invoiceType,
-      invoiceNumber: invoiceNumber,
+      invoiceNo: `${invoicePrefix}${invoiceNumber}`, // Combine prefix and number
+      invoiceNumber: invoiceNumber, // Keep individual number for reference
+      invoicePrefix: invoicePrefix, // Keep individual prefix for reference
       date: invoiceDate,
       amount: totalAmount, // Use recalculated amount
       supplierData,
       selectedBuyer,
+      buyerData: selectedBuyer, // Also pass as buyerData for compatibility
       consigneeType,
       products: invoiceProducts, // Pass the current list of products
       transportData,
@@ -285,7 +294,18 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
       // Add status if managed here, or let App.js handle it
     };
     console.log('Saving invoice with invoiceNumber:', invoiceNumber); // Debug log
-    onSave(invoiceData); // onSave in App.js will handle add vs update based on id
+    console.log('About to call onSave with data:', invoiceData); // Debug log
+    console.log('onSave function type:', typeof onSave); // Debug log
+    console.log('onSave function:', onSave); // Debug log
+    
+    if (typeof originalOnSave === 'function') {
+      console.log('Calling originalOnSave function...'); // Debug log
+      console.log('originalOnSave function:', originalOnSave); // Debug log
+      originalOnSave(invoiceData); // onSave in App.js will handle add vs update based on id
+      console.log('originalOnSave call completed'); // Debug log
+    } else {
+      console.error('originalOnSave is not a function!', originalOnSave); // Debug log
+    }
   };
 
   const handleSignatureUpload = (e) => {
