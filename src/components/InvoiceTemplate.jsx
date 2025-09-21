@@ -72,8 +72,8 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
   // Additional styles for PDF rendering
   const pdfStyles = forPDF ? {
     wrapper: {
-      width: '180mm',
-      padding: '5mm',
+      width: '210mm',
+      padding: '8mm',
       backgroundColor: 'white',
       color: 'black',
       fontFamily: 'Arial, sans-serif',
@@ -82,7 +82,7 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
     table: {
       width: '100%',
       tableLayout: 'fixed',
-      fontSize: '7pt'
+      fontSize: '8pt'
     },
     tableCell: {
       padding: '2px',
@@ -115,7 +115,7 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
         </div>
 
         {/* Title */}
-        <div className="invoice-title">TAX INVOICE</div>
+        <div className="invoice-title1">TAX INVOICE</div>
         <div className="subtitle">Original For Recipient</div>
 
         {/* Invoice Info */}

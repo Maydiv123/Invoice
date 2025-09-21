@@ -1,5 +1,5 @@
 @page {
-  size: Letter;  
+  size: A4;  
   margin: 0;
 }
 
@@ -19,9 +19,9 @@ body {
 
 /* Outer frame */
 .page {
-  width: 216mm;        
-  min-height: 279mm;   
-  padding: 10mm 15mm;
+  width: 210mm;        
+  min-height: 297mm;   
+  padding: 8mm 12mm;
   margin: 0 auto;
   background: white;
   border: 3px solid #000; /* Outer border */
@@ -30,11 +30,14 @@ body {
 /* Top + Bottom thank you outside border */
 .thank-you-top,
 .thank-you-bottom {
-  text-align: center;
+  text-align: center !important;
   font-size: 12px;
   color: #333;
   margin: 8px 0;
   font-style: italic;
+  width: 100%;
+  display: block;
+  margin-left: 47px;
 }
 
 .invoice-template {
@@ -72,7 +75,7 @@ body {
 .company-info {
   flex: 1;
   text-align: center;
-  margin-right: 80px;
+  margin-right: 70px;
 }
 
 .company-name {
@@ -105,16 +108,29 @@ body {
 }
 
 /* Invoice Title */
-.invoice-title {
-  text-align: center;
-  font-size: 18px;
-  font-weight: bold;
-  background: #d4e9fd;
-  color: #000;
-  padding: 8px;
-  margin: 15px 0;
-  border: 1px solid #000;
-}
+  .invoice-title {
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    background: #d4e9fd;
+    color: #000;
+    padding: 8px;
+    margin: 15px 0;
+    border: 1px solid #000;
+  
+  }
+  .invoice-title1 {
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    background: #d4e9fd;
+    color: #000;
+    padding: 8px;
+    margin: 15px 0;
+    border: 1px solid #000;
+ 
+   
+  }
 
 .subtitle {
   text-align: center;
@@ -128,7 +144,9 @@ body {
   font-weight: bold;
   color: #000;
   text-align: center;
+  
 }
+
 
 .invoice-type-checkboxes {
   display: none; /* Hide checkboxes */
@@ -281,6 +299,7 @@ body {
   border-collapse: collapse;
   margin: 20px 0;
   font-size: 12px;
+  table-layout: fixed;
 }
 
 .product-table th,
@@ -291,6 +310,28 @@ body {
   font-size: 11px;
   color: #000;
 }
+
+/* Column widths for better space utilization */
+.product-table th:nth-child(1),
+.product-table td:nth-child(1) { width: 6%; } /* Sr. No. */
+.product-table th:nth-child(2),
+.product-table td:nth-child(2) { width: 25%; } /* Name of Product */
+.product-table th:nth-child(3),
+.product-table td:nth-child(3) { width: 8%; } /* HSN/SAC */
+.product-table th:nth-child(4),
+.product-table td:nth-child(4) { width: 6%; } /* QTY */
+.product-table th:nth-child(5),
+.product-table td:nth-child(5) { width: 6%; } /* Unit */
+.product-table th:nth-child(6),
+.product-table td:nth-child(6) { width: 10%; } /* Rate */
+.product-table th:nth-child(7),
+.product-table td:nth-child(7) { width: 12%; } /* Taxable Value */
+.product-table th:nth-child(8),
+.product-table td:nth-child(8) { width: 8%; } /* IGST Rate */
+.product-table th:nth-child(9),
+.product-table td:nth-child(9) { width: 10%; } /* IGST Amt */
+.product-table th:nth-child(10),
+.product-table td:nth-child(10) { width: 9%; } /* Total */
 
 .product-table thead { 
   background: #d4e9fd; 
@@ -573,14 +614,13 @@ body {
 .for-company { 
   font-size: 12px; 
   color: #333; 
-  margin-bottom: 5px; 
+  margin-bottom: 25px; 
 }
 
 .signature-line { 
   font-size: 12px; 
   font-weight: bold; 
   color: #000; 
-  border-top: 1px solid #000;
   padding-top: 2px;
   width: 150px;
   margin-left: auto;
@@ -634,7 +674,7 @@ body {
   
   @page {
     margin: 0;
-    size: Letter;
+    size: A4;
   }
 }
 

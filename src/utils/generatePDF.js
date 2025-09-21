@@ -17,8 +17,8 @@ export const generatePDF = async (invoice) => {
     tempContainer.style.position = 'absolute';
     tempContainer.style.left = '-9999px';
     tempContainer.style.top = '-9999px';
-    // Using width that fits in landscape A4
-    tempContainer.style.width = '270mm'; 
+    // Using width that fits in portrait A4
+    tempContainer.style.width = '210mm'; 
     tempContainer.style.margin = '0';
     tempContainer.style.padding = '0';
     tempContainer.style.background = 'white';
@@ -33,7 +33,7 @@ export const generatePDF = async (invoice) => {
         color: black;
         background-color: white;
         padding: 10mm;
-        width: 270mm;
+        width: 210mm;
         box-sizing: border-box;
         margin: 0 auto;
       }
@@ -180,17 +180,17 @@ export const generatePDF = async (invoice) => {
     
     console.log('Canvas created successfully');
     
-    // Create a new PDF in LANDSCAPE orientation
+    // Create a new PDF in PORTRAIT orientation
     const pdf = new jsPDF({
-      orientation: 'landscape',
+      orientation: 'portrait',
       unit: 'mm',
       format: 'a4',
       compress: true
     });
     
-    // A4 landscape dimensions
-    const pdfWidth = 297; // A4 width in landscape (mm)
-    const pdfHeight = 210; // A4 height in landscape (mm)
+    // A4 portrait dimensions
+    const pdfWidth = 210; // A4 width in portrait (mm)
+    const pdfHeight = 297; // A4 height in portrait (mm)
     
     // Calculate margins to center the content
     const margin = 10; // 10mm margin
