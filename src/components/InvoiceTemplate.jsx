@@ -195,14 +195,34 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
           </div>
           </div>
           <div className="right-column">
-            <div className="summary-box">
-              <div className="summary-row"><span>Total Before Tax</span><span>₹{subTotal.toFixed(2)}</span></div>
-              <div className="summary-row"><span>Add: IGST</span><span>₹{totalGST.toFixed(2)}</span></div>
-              <div className="summary-row highlight"><span>Total Tax</span><span>₹{totalGST.toFixed(2)}</span></div>
-              <div className="summary-row total"><span>Final Amount</span><span>₹{grandTotal.toFixed(2)}</span></div>
-              <div className="summary-row highlight"><span>Balance Due</span><span>₹{grandTotal.toFixed(2)}</span></div>
+            <div className="summary-details-right">
+              <div className="summary-details-header">Bank and Payment Details</div>
+              <table className="summary-table">
+                <tbody>
+                  <tr>
+                    <td className="summary-label">Total Before Tax</td>
+                    <td className="summary-value">₹{subTotal.toFixed(2)}</td>
+                  </tr>
+                  <tr>
+                    <td className="summary-label">Add: IGST</td>
+                    <td className="summary-value">₹{totalGST.toFixed(2)}</td>
+                  </tr>
+                  <tr className="highlight-row">
+                    <td className="summary-label">Total Tax</td>
+                    <td className="summary-value">₹{totalGST.toFixed(2)}</td>
+                  </tr>
+                  <tr className="total-row">
+                    <td className="summary-label">Final Amount</td>
+                    <td className="summary-value">₹{grandTotal.toFixed(2)}</td>
+                  </tr>
+                  <tr className="highlight-row">
+                    <td className="summary-label">Balance Due</td>
+                    <td className="summary-value">₹{grandTotal.toFixed(2)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
       </div>
 
         {/* Terms */}

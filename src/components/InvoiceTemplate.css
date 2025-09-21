@@ -396,29 +396,45 @@ body {
   font-weight: bold;
 }
 
-/* Make Taxable Value column highlighted with blue */
-.product-table td:nth-child(7),
+/* Make Taxable Value column data cells white, keep header blue */
+.product-table tbody td:nth-child(7) {
+  background: white !important;
+  font-weight: bold;
+}
+
 .product-table th:nth-child(7) {
   background: #d4e9fd !important;
   font-weight: bold;
 }
 
-/* Make IGST Rate column highlighted with blue */
-.product-table td:nth-child(8),
+/* Make IGST Rate column data cells white, keep header blue */
+.product-table tbody td:nth-child(8) {
+  background: white !important;
+  font-weight: bold;
+}
+
 .product-table th:nth-child(8) {
   background: #d4e9fd !important;
   font-weight: bold;
 }
 
-/* Make IGST Amount column highlighted with blue */
-.product-table td:nth-child(9),
+/* Make IGST Amount column data cells white, keep header blue */
+.product-table tbody td:nth-child(9) {
+  background: white !important;
+  font-weight: bold;
+}
+
 .product-table th:nth-child(9) {
   background: #d4e9fd !important;
   font-weight: bold;
 }
 
-/* Make Total column highlighted with blue */
-.product-table td:nth-child(10),
+/* Make Total column data cells white, keep header blue */
+.product-table tbody td:nth-child(10) {
+  background: white !important;
+  font-weight: bold;
+}
+
 .product-table th:nth-child(10) {
   background: #d4e9fd !important;
   font-weight: bold;
@@ -495,35 +511,64 @@ body {
   color: #000; 
 }
 
-/* Summary */
-.summary-box { 
-  border: 1px solid #000; 
+/* Summary Details Right */
+.summary-details-right {
+  border: 1px solid #000;
+  padding: 0;
 }
 
-.summary-row {
+.summary-details-header {
+  font-size: 13px;
+  font-weight: bold;
+  color: #000;
+  background: #d4e9fd;
+  margin: 0;
+  padding: 5px 10px;
   border-bottom: 1px solid #000;
-  padding: 8px 10px;
+}
+
+.summary-table {
+  width: 100%;
+  border-collapse: collapse;
   font-size: 12px;
-  display: flex;
-  justify-content: space-between;
 }
 
-/* Reduce padding for first three rows only */
-.summary-row:nth-child(1),
-.summary-row:nth-child(2),
-.summary-row:nth-child(3) {
-  padding: 3px 14px  ;
+.summary-table td {
+  border: 1px solid #000;
+  padding: 6px 10px;
+  font-size: 12px;
 }
 
-.summary-row:last-child { 
-  border-bottom: none; 
+.summary-label {
+  font-weight: normal;
+  color: #333;
+  width: 60%;
 }
 
-.summary-row.highlight { 
-  background: #d4e9fd; 
+.summary-value {
+  font-weight: bold;
+  color: #000;
+  text-align: right;
+  width: 40%;
 }
 
-.summary-row.total {
+.highlight-row {
+  background: #d4e9fd;
+}
+
+.highlight-row .summary-label,
+.highlight-row .summary-value {
+  background: #d4e9fd;
+  font-weight: bold;
+}
+
+.total-row {
+  background: #d4e9fd;
+  font-weight: bold;
+}
+
+.total-row .summary-label,
+.total-row .summary-value {
   background: #d4e9fd;
   font-weight: bold;
 }
