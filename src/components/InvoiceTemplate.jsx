@@ -110,7 +110,7 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
             <div className="company-name">{supplierData?.name || supplierData?.companyName}</div>
             <div className="company-address">{supplierData?.address} {supplierData?.city} {supplierData?.state} {supplierData?.pincode}</div>
             <div className="company-contact">{supplierData?.phone} | {supplierData?.email}</div>
-            <div className="gstin-line"><b>GSTIN:</b> {supplierData?.gstin} | <b>State Code:</b> {supplierData?.stateCode || '06'}</div>
+            <div className="gstin-line"><b>GSTIN:</b> <b>{supplierData?.gstin}</b> | <b>State Code:</b> <b>{supplierData?.stateCode || '06'}</b></div>
           </div>
         </div>
 
@@ -135,11 +135,11 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
         <div className="address-container">
           <div className="address-block">
             <div className="address-header">Details of Receiver | Billed to</div>
-            <div className="address-detail"><b>Name:</b> {buyerInfo?.companyName}<br/><b>Address:</b> {buyerInfo?.address} {buyerInfo?.city} {buyerInfo?.state} {buyerInfo?.pincode}<br/><b>GSTIN:</b> {buyerInfo?.gstin} | <b>State:</b> {buyerInfo?.state}</div>
+            <div className="address-detail"><b>Name:</b> {buyerInfo?.companyName}<br/><b>Address:</b> {buyerInfo?.address} {buyerInfo?.city} {buyerInfo?.state} {buyerInfo?.pincode}<br/><b>GSTIN:</b> <b>{buyerInfo?.gstin}</b> | <b>State:</b> <b>{buyerInfo?.state}</b></div>
           </div>
           <div className="address-block">
             <div className="address-header">Details of Consignee | Shipped to</div>
-            <div className="address-detail"><b>Name:</b> {buyerInfo?.companyName}<br/><b>Address:</b> {buyerInfo?.address} {buyerInfo?.city} {buyerInfo?.state} {buyerInfo?.pincode}<br/><b>GSTIN:</b> {buyerInfo?.gstin} | <b>State:</b> {buyerInfo?.state}</div>
+            <div className="address-detail"><b>Name:</b> {buyerInfo?.companyName}<br/><b>Address:</b> {buyerInfo?.address} {buyerInfo?.city} {buyerInfo?.state} {buyerInfo?.pincode}<br/><b>GSTIN:</b> <b>{buyerInfo?.gstin}</b> | <b>State:</b> <b>{buyerInfo?.state}</b></div>
         </div>
       </div>
 
@@ -160,14 +160,14 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
             
             return (
                 <tr key={index}>
-                  <td>{index + 1}</td><td>{product?.name}</td><td>{product?.hsn}</td><td>{quantity}</td><td>{product?.unit || '-'}</td><td>{rate.toFixed(2)}</td><td>{amount.toFixed(2)}</td><td>{gstRate.toFixed(0)}%</td><td>{gstAmount.toFixed(2)}</td><td><b>₹{(amount + gstAmount).toFixed(2)}</b></td>
+                  <td>{index + 1}</td><td>{product?.name}</td><td>{product?.hsn}</td><td>{quantity}</td><td>{product?.unit || '-'}</td><td>{rate.toFixed(2)}</td><td>{amount.toFixed(2)}</td><td>{gstRate.toFixed(0)}%</td><td><b>{gstAmount.toFixed(2)}</b></td><td><b>₹{(amount + gstAmount).toFixed(2)}</b></td>
               </tr>
             );
           })}
           </tbody>
           <tfoot>
             <tr>
-              <td colSpan="3"><b>Total</b></td><td>{totalQuantity}</td><td>-</td><td>-</td><td>{subTotal.toFixed(2)}</td><td>-</td><td>{totalGST.toFixed(2)}</td><td>{grandTotal.toFixed(2)}</td>
+              <td colSpan="3"><b>Total</b></td><td>{totalQuantity}</td><td>-</td><td>-</td><td>{subTotal.toFixed(2)}</td><td>-</td><td><b>{totalGST.toFixed(2)}</b></td><td><b>{grandTotal.toFixed(2)}</b></td>
           </tr>
           </tfoot>
       </table>
@@ -196,7 +196,7 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
           </div>
           <div className="right-column">
             <div className="summary-details-right">
-              <div className="summary-details-header">Bank and Payment Details</div>
+             
               <table className="summary-table">
                 <tbody>
                   <tr>
@@ -205,15 +205,15 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
                   </tr>
                   <tr>
                     <td className="summary-label">Add: IGST</td>
-                    <td className="summary-value">₹{totalGST.toFixed(2)}</td>
+                    <td className="summary-value"><b>₹{totalGST.toFixed(2)}</b></td>
                   </tr>
                   <tr className="highlight-row">
                     <td className="summary-label">Total Tax</td>
-                    <td className="summary-value">₹{totalGST.toFixed(2)}</td>
+                    <td className="summary-value"><b>₹{totalGST.toFixed(2)}</b></td>
                   </tr>
-                  <tr className="total-row">
-                    <td className="summary-label">Final Amount</td>
-                    <td className="summary-value">₹{grandTotal.toFixed(2)}</td>
+                  <tr className="total-row final-amount-row">
+                    <td className="summary-label final-amount-label">Final Amount</td>
+                    <td className="summary-value final-amount-value">₹{grandTotal.toFixed(2)}</td>
                   </tr>
                   <tr className="highlight-row">
                     <td className="summary-label">Balance Due</td>
